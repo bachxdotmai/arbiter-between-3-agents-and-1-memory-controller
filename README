@@ -1,0 +1,1 @@
+This controller which arbitrates between 3 Avalon Agents and 1 memory controller uses 3 different algorithms: Round Robin, Weigted Round Robin, Credit borrow and Repay.
