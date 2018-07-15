@@ -47,3 +47,68 @@ module BACH_MMC (
     output [31:0] di_AvlWriteData(di_avl_writedata)
 );
 
+localparam STATE_IDLE   = 4'b0001;
+localparam STATE_GRANT0 = 4'b0010;
+localparam STATE_GRANT1 = 4'b0100;
+localparam STATE_GRANT2 = 4'b1000;
+
+reg [3:0] state, nxt_state;
+reg [2:0] grant, req, tmo;
+
+assign grant = state[3:1];
+assign req = {
+
+always@(*) 
+begin
+  case (state)
+    STATE_IDLE: begin
+      if (req[0])
+        nxt_state = STATE_GRANT0;
+      else if (req[1])
+        nxt_state = STATE_GRANT1;
+      else if (req[2])
+        nxt_state = STATE_GRANT2;
+      else
+        nxt_state = STATE_IDLE;
+    end
+    STATE_GRANT0: begin
+      if (req[0] & ~tmo[0])
+        nxt_state = STATE_GRANT0;
+      else if (req[1])
+        nxt_state = STATE_GRANT1;
+      else if (req[2])
+        nxt_state = STATE_GRANT2;
+      else
+        nxt_state = STATE_IDLE;
+    end
+    STATE_GRANT1: begin
+      if (req[1] & ~tmo[1])
+        nxt_state = STATE_GRANT1;
+      else if (req[2])
+        nxt_state = STATE_GRANT2;
+      else if (req[0])
+        nxt_state = STATE_GRANT0;
+      else
+        nxt_state = STATE_IDLE;
+    end
+    STATE_GRANT2: begin
+      if (req[2] & ~tmo[2])
+        nxt_state = STATE_GRANT2;
+      else if (req[0])
+        nxt_state = STATE_GRANT0;
+      else if (req[1])
+        nxt_state = STATE_GRANT1;
+      else
+        nxt_state = STATE_IDLE;
+    end
+  endcase
+end
+
+always@(posedge Clk or negedge Rstn)
+  if (!Rstn)
+    state <= STATE_IDLE;
+  else
+    state <= nxt_state;
+
+endmodule
+
